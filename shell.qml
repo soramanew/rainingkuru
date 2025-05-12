@@ -1,117 +1,148 @@
+pragma ComponentBehavior: Bound
+
 import Quickshell
+import Quickshell.Io
 import QtQuick
 import QtQuick.Particles
 
-Variants {
-    model: Quickshell.screens
+Scope {
+    id: root
 
-    PanelWindow {
-        id: win
+    property point cursor
 
-        required property ShellScreen modelData
+    Variants {
+        model: Quickshell.screens
 
-        screen: modelData
-        aboveWindows: false
-        color: "transparent"
+        PanelWindow {
+            id: win
 
-        anchors.top: true
-        anchors.left: true
-        anchors.bottom: true
-        anchors.right: true
+            required property ShellScreen modelData
 
-        ParticleSystem {
-            anchors.fill: parent
+            screen: modelData
+            aboveWindows: false
+            color: "transparent"
 
-            ImageParticle {
-                groups: ["kuru"]
-                sprites: Sprite {
-                    source: "kuru.png"
-                    frameCount: 6
-                    frameDuration: 80
+            anchors.top: true
+            anchors.left: true
+            anchors.bottom: true
+            anchors.right: true
+
+            ParticleSystem {
+                anchors.fill: parent
+
+                ImageParticle {
+                    groups: ["kuru"]
+                    sprites: Sprite {
+                        source: "kuru.png"
+                        frameCount: 6
+                        frameDuration: 80
+                    }
+                    spritesInterpolate: false
+
+                    rotationVariation: 360
+                    rotationVelocityVariation: 360
                 }
-                spritesInterpolate: false
 
-                rotationVariation: 360
-                rotationVelocityVariation: 360
-            }
-
-            ImageParticle {
-                groups: ["trail"]
-                source: "qrc:///particleresources/glowdot.png"
-                color: "#00333333"
-                z: -2
-            }
-
-            ImageParticle {
-                groups: ["fire"]
-                source: "qrc:///particleresources/glowdot.png"
-                color: "#00ff400f"
-                colorVariation: 0.1
-                z: -1
-            }
-
-            Emitter {
-                anchors.bottom: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-
-                group: "kuru"
-                emitRate: 100
-                lifeSpan: 5000
-                lifeSpanVariation: 1000
-
-                size: 50
-                endSize: 40
-                sizeVariation: 30
-
-                velocity: AngleDirection {
-                    angleVariation: 360
-                    magnitude: 80
-                    magnitudeVariation: 100
+                ImageParticle {
+                    groups: ["trail"]
+                    source: "qrc:///particleresources/glowdot.png"
+                    color: "#00333333"
+                    z: -2
                 }
-            }
 
-            TrailEmitter {
-                follow: "kuru"
-                group: "trail"
-                emitRatePerParticle: 20
-
-                size: 36
-                sizeVariation: 8
-                endSize: 16
-
-                velocity: AngleDirection {
-                    angleVariation: 360
-                    magnitude: 20
-                    magnitudeVariation: 10
+                ImageParticle {
+                    groups: ["fire"]
+                    source: "qrc:///particleresources/glowdot.png"
+                    color: "#00ff400f"
+                    colorVariation: 0.1
+                    z: -1
                 }
-            }
 
-            TrailEmitter {
-                follow: "kuru"
-                group: "fire"
-                emitRatePerParticle: 20
+                Emitter {
+                    anchors.bottom: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
 
-                size: 36
-                sizeVariation: 8
-                endSize: 16
+                    group: "kuru"
+                    emitRate: 200
+                    lifeSpan: 2000
+                    lifeSpanVariation: 1000
 
-                velocity: AngleDirection {
-                    angleVariation: 360
-                    magnitude: 20
-                    magnitudeVariation: 10
+                    size: 60
+                    endSize: 50
+                    sizeVariation: 30
+
+                    velocity: AngleDirection {
+                        angleVariation: 360
+                        magnitude: 80
+                        magnitudeVariation: 100
+                    }
                 }
-            }
 
-            Gravity {
-                groups: ["kuru"]
-                magnitude: 100
-            }
+                TrailEmitter {
+                    follow: "kuru"
+                    group: "trail"
+                    emitRatePerParticle: 20
 
-            Turbulence {
-                groups: ["trail"]
-                strength: 32
+                    size: 36
+                    sizeVariation: 8
+                    endSize: 16
+
+                    velocity: AngleDirection {
+                        angleVariation: 360
+                        magnitude: 20
+                        magnitudeVariation: 10
+                    }
+                }
+
+                TrailEmitter {
+                    follow: "kuru"
+                    group: "fire"
+                    emitRatePerParticle: 20
+
+                    size: 36
+                    sizeVariation: 8
+                    endSize: 16
+
+                    velocity: AngleDirection {
+                        angleVariation: 360
+                        magnitude: 20
+                        magnitudeVariation: 10
+                    }
+                }
+
+                Gravity {
+                    groups: ["kuru"]
+                    magnitude: 500
+                }
+
+                Turbulence {
+                    groups: ["trail"]
+                    strength: 32
+                }
+
+                Attractor {
+                    pointX: root.cursor.x
+                    pointY: root.cursor.y
+                    groups: ["kuru"]
+                    strength: 0.005
+                    proportionalToDistance: Attractor.Quadratic
+                }
             }
         }
+    }
+
+    Process {
+        id: cursorProc
+
+        command: ["hyprctl", "cursorpos"]
+        stdout: SplitParser {
+            onRead: data => root.cursor = data
+        }
+    }
+
+    FrameAnimation {
+        running: true
+        onTriggered: cursorProc.running = true
     }
 }
